@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>EuroBSDcon 2017</title>
+    <meta charset="utf-8">
+    <style>
+      @font-face{
+        font-family: 'Droid Serif';
+        src: url('fonts/DroidSerif-Regular.ttf');
+      }
+      @font-face{
+        font-family: 'Yanone Kaffeesatz';
+        src: url('fonts/YanoneKaffeesatz-Regular.ttf');
+      }
+      @font-face{
+        font-family: 'Ubuntu Mono';
+        src: url('fonts/UbuntuMono-Regular.ttf');
+      }
+
+      body { font-family: 'Droid Serif'; }
+      h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: normal;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+
+           h1, h2, h3 {
+        font-family: 'Yanone Kaffeesatz';
+        font-weight: 400;
+        margin-bottom: 0;
+      }
+      .remark-slide-content h1 { font-size: 3em; }
+      .remark-slide-content h2 { font-size: 2em; }
+      .remark-slide-content h3 {
+        font-size: 1.6em;
+        color: rgb(121,180,76);
+      }
+      .remark-slide-content h4 {
+        font-size: 1em;
+        color: rgb(121,180,76);
+      }
+      .footnote {
+        position: absolute;
+        bottom: 3em;
+      }
+      li p { line-height: 1.25em; }
+      .red { color: #fa0000; }
+      .green { color: rgb(121, 188, 76); }
+      .large { font-size: 2em; }
+      a, a > code {
+        color: rgb(121, 180, 76);
+        text-decoration: none;
+      }
+      code {
+        background: #e7e8e2;
+        border-radius: 5px;
+      }
+      .remark-code, .remark-inline-code { font-family: 'Ubuntu Mono'; }
+      .remark-code-line-highlighted     { background-color: #373832; }
+      .pull-left {
+        float: left;
+        width: 47%;
+      }
+      .pull-right {
+        float: right;
+        width: 47%;
+      }
+      .pull-right ~ p {
+        clear: both;
+      }
+      #slideshow .slide .content code {
+        font-size: 0.8em;
+      }
+      #slideshow .slide .content pre code {
+        font-size: 0.9em;
+        padding: 15px;
+      }
+      .inverse {
+        background: #272822;
+        color: #777872;
+        text-shadow: 0 0 20px #333;
+      }
+      .inverse h1, .inverse h2 {
+        color: #f3f3f3;
+        line-height: 0.8em;
+      }
+
+      /* Slide-specific styling */
+      #slide-inverse .footnote {
+        bottom: 12px;
+        left: 20px;
+      }
+      #slide-how .slides {
+        font-size: 0.9em;
+        position: absolute;
+        top:  151px;
+        right: 140px;
+      }
+      #slide-how .slides h3 {
+        margin-top: 0.2em;
+      }
+      #slide-how .slides .first, #slide-how .slides .second {
+        padding: 1px 20px;
+        height: 90px;
+        width: 120px;
+        -moz-box-shadow: 0 0 10px #777;
+        -webkit-box-shadow: 0 0 10px #777;
+        box-shadow: 0 0 10px #777;
+      }
+      #slide-how .slides .first {
+        background: #fff;
+        position: absolute;
+        top: 20%;
+        left: 20%;
+        z-index: 1;
+      }
+      #slide-how .slides .second {
+        position: relative;
+        background: #fff;
+        z-index: 0;
+      }
+
+      /* Two-column layout */
+      .left-column {
+        color: #777;
+        width: 20%;
+        height: 92%;
+        float: left;
+      }
+      .left-column h2:last-of-type, .left-column h3:last-child {
+        color: #000;
+      }
+      .right-column {
+        width: 75%;
+        float: right;
+        padding-top: 1em;
+      }
+    </style>
+  </head>
+  <body>
+    <textarea id="source">
+name: inverse
+layout: true
+class: center, middle, inverse
+---
+
+# OpenBSD's small steps towards DTrace
+
+### EuroBSDcon 2017, Paris
+
+Jasper Lievisse Adriaanse
+
+---
+
+layout: false
+
+# Agenda
+
+1. Introduction
+2. DTrace
+3. CTF
+4. Current state
+5. Conclusion
+
+---
+template: inverse
+
+# Introduction
+
+---
+# `jasper@`
+
+- OpenBSD developer since 2006
+  - ports (GNOME)
+  - octeon
+  - urng
+  - ctf
+
+--
+- By day
+  - <img src="images/snow.png" height="24" /> UNIX engineer at Snow
+- By night
+  - <img src="images/github.svg" height="24" /> jasperla
+  - <img src="images/twitter.png" height="24" /> jasper_la
+
+---
+template: inverse
+
+# "a tale about DDB and CTF"
+
+### A short while ago in source tree, not so far away...
+
+---
+template: inverse
+
+# DTrace
+
+### (the endgame)
+
+---
+# DTrace
+
+.left-column[
+  ## What is it?
+]
+.right-column[
+- Dynamic Tracing framework
+- Originated at Sun for Solaris 10
+- CDDL licensed
+- Ported to macOS/FreeBSD/NetBSD/Linux
+- Providers and probes
+- D scripts
+]
+
+---
+# DTrace
+
+```bash
+# dtrace -n 'syscall:::entry { trace(execname); }'
+dtrace: description 'syscall:::entry ' matched 233 probes
+CPU     ID                    FUNCTION:NAME
+  0   5654                      ioctl:entry   dtrace
+  0   5654                      ioctl:entry   dtrace
+  1   5860                lwp_sigmask:entry   qemu-system-x86_
+  1   5568                      write:entry   qemu-system-x86_
+[..]
+```
+
+---
+# DTrace
+
+```bash
+# dtrace -n 'sysinfo:::writech { @bytes[execname] = sum(arg0); }'
+dtrace: description 'sysinfo:::writech ' matched 6 probes
+^C
+
+  dtrace                                                            1
+  tty                                                              11
+  uname                                                            11
+  cat                                                              53
+  zoneadm                                                        1026
+  vmadm                                                          1508
+  auditd                                                         1684
+  sed                                                            3206
+  lldpd                                                          3600
+  sshd                                                           4957
+  bash                                                           5354
+  qemu-system-x86_                                            1074704
+```
+
+---
+# DTrace
+.left-column[
+  ## What is it?
+  ## Why should you care?
+]
+.right-column[
+- `truss`/`strace`/`ktrace`/`ltrace` only give a partial view
+- Addresses the observability problem
+- Fine-grained (short term) inspection
+- Unparalleled inspection .green[*]
+- No more `printf` debugging (less at least)
+
+.footnote[.green.bold[*] ["Shouting in the datacenter"](https://www.youtube.com/watch?v=tDacjrSCeq4)]
+]
+
+---
+# DTrace
+.left-column[
+  ## What is it?
+  ## Why should you care?
+  ## How does it work?
+]
+.right-column[
+- Providers (e.g. `syscall` or `fbt`)
+- Probes (e.g. `syscall::execve:entry`)
+- Function boundary patching/emulating
+- Knowledge of functions and types
+]
+
+---
+template: inverse
+
+# CTF
+
+---
+template: inverse
+
+<img src="images/capturetheflag.png" width="100%" />
+
+---
+template: inverse
+
+# CTF
+
+### Compact Type Format
+
+---
+# CTF
+.left-column[
+  ## Que?
+]
+.right-column[
+- Compacted notation of
+  - labels
+  - objects
+  - functions
+  - types
+  - strings
+- `.SUNW_ctf` ELF section
+- converted from DWARF
+- significantly smaller and simpler than DWARF
+]
+
+---
+# CTF (ctfdump)
+
+```bash
+# ctfdump -h /bsd
+  cth_magic    = 0xcff1
+  cth_version  = 2
+  cth_flags    = 0x01
+  cth_parlabel = (anon)
+  cth_parname  = (anon)
+  cth_lbloff   = 0
+  cth_objtoff  = 8
+  cth_funcoff  = 10958
+  cth_typeoff  = 203484
+  cth_stroff   = 1649404
+  cth_strlen   = 462757
+#
+```
+
+---
+# CTF
+.left-column[
+  ## Que?
+  ## DWARF
+]
+.right-column[
+- Debugging data format generated by compiler
+- Compilation Unit (CU)
+- Debugging Information Entry (DIE)
+  - DW_TAG_variable, etc
+- DWARFv2 supported on OpenBSD
+- DWARFv5 standardized in 2017
+]
+
+---
+# DWARF
+
+```bash
+# dwarfdump nfsstat.o
+.debug_info
+
+COMPILE_UNIT<header overall offset = 0x00000000>:
+< 0><0x0000000b>  DW_TAG_compile_unit
+                    DW_AT_producer              OpenBSD clang version 4.0.0 (tags/RELEASE_400/final) (based on LLVM 4.0.0)
+                    DW_AT_language              DW_LANG_C99
+                    DW_AT_name                  nfsstat.c
+                    DW_AT_stmt_list             0x00000000
+                    DW_AT_comp_dir              /usr/src/usr.bin/nfsstat
+                    DW_AT_low_pc                0x00000000
+                    DW_AT_high_pc               0x000011de
+
+LOCAL_SYMBOLS:
+< 1><0x0000002e>    DW_TAG_variable
+                      DW_AT_name                  nl
+                      DW_AT_type                  <0x00000044>
+                      DW_AT_external              yes(1)
+                      DW_AT_decl_file             0x00000002 /usr/src/usr.bin/nfsstat/nfsstat.c
+                      DW_AT_decl_line             0x0000003d
+                      DW_AT_location              DW_OP_addr 0x00000000
+< 1><0x00000044>    DW_TAG_array_type
+                      DW_AT_type                  <0x00000050>
+< 2><0x00000049>      DW_TAG_subrange_type
+                        DW_AT_type                  <0x000000c0>
+                        DW_AT_count                 0x00000002
+[...]
+```
+
+
+---
+# CTF
+.left-column[
+  ## Que?
+  ## DWARF
+  ## Toolchain
+]
+.right-column[
+- ctftools
+  - `ctfconvert`
+  - `ctfmerge`
+  - `ctfdump`
+]
+
+---
+# CTF
+.left-column[
+  ## Que?
+  ## DWARF
+  ## Toolchain
+]
+.right-column[
+- ctftools
+  - ~~`ctfconvert`~~ `ctfconv`
+  - ~~`ctfmerge`~~
+  - `ctfdump`
+  - `ctfstrip`
+]
+
+---
+# CTF (ctfdump)
+
+```bash
+# ctfdump -s /bsd
+  [0] \0
+  [1] unknown
+  [9] void
+  [14] wsemul_ops
+  [25] name
+  [30] cnattach
+  [39] attach
+  [46] output
+  [53] translate
+  [63] detach
+[..]
+```
+
+---
+# CTF (ctfdump)
+
+```bash
+# ctfdump -t /bsd
+[..]
+  [12] INTEGER signed encoding=SIGNED offset=0 bits=32
+  [13] POINTER (anon) refers to 14
+  [14] CONST (anon) refers to 15
+  [15] STRUCT wsdisplay_emulops (72 bytes)
+        cursor type=16 off=0
+        mapchar type=18 off=64
+        putchar type=22 off=128
+        copycols type=22 off=192
+        erasecols type=22 off=256
+        copyrows type=16 off=320
+        eraserows type=16 off=384
+        alloc_attr type=22 off=448
+       unpack_attr type=27 off=512
+[..]
+```
+
+---
+# CTF (ctfdump)
+
+```bash
+# ctfdump -f /bsd
+[..]
+* [4009] FUNC (db_numargs) returns: 12 args: (50126, 13063)
+  [4010] FUNC (wdc_preata_drive) returns: 12 args: (23414, 12)
+  [4011] FUNC (bwi_set_addr_filter) returns: 1 args: (19183, 278, 3261)
+  [4012] FUNC (uslhcom_get_version) returns: 12 args: (18476, 18480)
+  [4013] FUNC (rt2560_eeprom_read) returns: 278 args: (12456, 444)
+  [4014] FUNC (mpi_detach) returns: 1 args: (21925)
+[..]
+```
+
+```bash
+# ctfdump -t /bsd
+[..]
+  [12] INTEGER signed encoding=SIGNED offset=0 bits=32
+  [50126] POINTER (anon) refers to 50127
+  [50127] STRUCT callframe (24 bytes)
+  [13063] POINTER (anon) refers to 13064
+  [13064] TYPEDEF Elf64_Sym refers to 13065
+  [13065] STRUCT (anon) (24 bytes)
+[..]
+```
+
+---
+# CTF
+.left-column[
+  ## Que?
+  ## DWARF
+  ## DDB
+]
+.right-column[
+- initial consumer of CTF
+- allows in-kernel introspection of its CTF
+- `trace` / `pprint` / `show struct`
+]
+
+---
+# DDB
+
+Without CTF:
+
+```
+ddb> trace
+db_enter() at db_enter+0x5
+ddb_sysctl() at ddb_sysctl+0x141
+sys_sysctl() at sys_sysctl+0x162
+syscall() at syscall+0x1fb
+ddb>
+```
+
+With CTF:
+```
+ddb> trace
+db_enter() at db_enter+0x5
+ddb_sysctl(ffff80000e524570,ffff8000ffffb410,0,de41ece8dade919e,0,3dade919e,fff
+f8000ffffb410) at ddb_sysctl+0x141
+sys_sysctl(ffff80000e524600,ca0,ffff8000ffffb410) at sys_sysctl+0x162
+syscall() at syscall+0x1fb
+ddb>
+```
+
+---
+# DDB
+
+```
+ddb> pprint ncpus
+ncpus:  1
+ddb>
+```
+
+```
+ddb> pprint db_ctf
+* db_ctf: {cth = (struct ctf_header *)0xffffffff81b5e2c0, rawctf = (const char *)
+0xffffffff81b5e2c0, rawctflen = 659662, data = (const char *)0xffff8000001a9000,
+dlen = 2097908, strtab = (char *)0xffffffff81ca9ff8, ctf_found = 1}
+ddb>
+```
+
+```
+ddb> show struct ctf_header 0xffffffff81b5e2c0
+struct ctf_header at 0xffffffff81b5e2c0 (36 bytes) {cth_magic = 16961521,
+cth_version = 258, cth_flags = 1, cth_parlabel = 0, cth_parname = 0, cth_lbloff = 0,
+cth_objtoff = 8, cth_funcoff = 10902, cth_typeoff = 202952, cth_stroff = 1635504,
+cth_strlen = 462404}
+ddb>
+```
+
+---
+template: inverse
+
+# Current state
+
+### and the road ahead
+
+---
+# Status quo
+
+- g2k16:
+  - dynamic profiling committed
+  - illumos ctftools imported in ports
+  - initial `db_ctf.c` committed
+- g2k17:
+  - ISC-licensed toolchain imported in base
+  - CTF-enabled kernels built by default
+- september 2017:
+  - `DDB_STRUCT` option removed; `show struct` uses CTF
+
+---
+# Future
+
+- DWARFv[3:5]
+- more involved compiler/linker?
+- portability to non-(amd64|i386)
+  - dynamic profiling
+  - DDB `trace` CTF usage
+
+--
+- `/usr/sbin/dtrace`
+
+---
+template: inverse
+
+# Conclusion
+
+---
+# Conclusion
+.left-column[
+  ## Recap
+]
+.right-column[
+- ISC-licensed toolchain
+- CTF integrated and introspectable
+- Long ways to go...
+- &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;...but making good progress
+- _You_ can help!
+]
+
+---
+# Conclusion
+.left-column[
+  ## Recap
+  ## Thanks
+]
+.right-column[
+- Martin Pieuchot (`mpi@`)
+- EuroBSDcon Foundation
+- Snow B.V.
+]
+
+---
+template: inverse
+
+# Ze end.
+
+### Questions?
+    </textarea>
+    <script src="js/remark.js">
+    </script>
+    <script>
+      var slideshow = remark.create({
+          highlightStyle: 'monokai',
+          highlightLanguage: 'remark',
+          highlightLines: true,
+          countIncrementalSlides: false,
+          slideNumberFormat: '%current%'
+        }) ;
+    </script
+  </body>
+</html>
